@@ -1,0 +1,84 @@
+---
+title: "p8105_hw3_at3535"
+author: "Amanda Tsai"
+date: "10/10/2020"
+output: github_document
+---
+
+
+```{r setup}
+library(tidyverse)
+library(p8105.datasets)
+data("instacart")
+knitr::opts_chunk$set(
+  fig.width = 10,
+  fig.asp = .6,
+  out.width = "90%"
+)
+```
+
+# Problem 1
+
+
+# Problem 2 
+
+The following code chunk loads the accelerometer dataset and cleans the dataset by encoding with reasonable variable classes, adds a new variable week_weekend that determines whether the day observed is a weekday or weekend, and combines all activity observations into one variable column. 
+
+```{r accel}
+accel_df = 
+  read_csv(file = "./data/accel_data.csv") %>%
+  janitor::clean_names() %>%
+  mutate(day = as.factor(day)) %>%
+  mutate(week_weekend = as.factor(ifelse(day %in% c("Saturday", "Sunday"), "weekend", "weekday"))) %>%
+  pivot_longer(activity_1:activity_1440,
+               names_to = "minute",
+               names_prefix = "activity_",
+               values_to = "activity_count") %>%
+  mutate(
+    minute = as.integer(minute),
+    week = as.factor(week), 
+    day_id = as.factor(day_id)) 
+
+accel_df
+skimr::skim(accel_df)
+```
+
+The resulting dataset has the existing variables: **`r colnames(accel_df)`** which respectively are of types:  **`r map(accel_df, class)`**.
+
+The dimensions of the dataset are `r nrow(accel_df)` x `r ncol(accel_df)`, meaning that there are a total of `r nrow(accel_df)` observations for `r ncol(accel_df)` different variables. There are 35 unique entries for the day_id variable, showing that the dataset contains observations over a span of 35 days.
+
+The key variables in this dataset are **day, minute** and **activity_count**. 
+
+```{r aggregate}
+total_activity = 
+  accel_df %>% 
+  group_by(day_id) %>%
+  summarize(daily_activity = sum(activity_count))
+
+total_activity
+skimr::skim(total_activity)
+```
+
+The trends are not quite clear. 
+
+```{r accel_plot}
+accel_df %>%
+  ggplot(aes(x = factor(minute), y = activity_count)) +
+  geom_point(alpha = 0.5, aes(color = day)) +
+  scale_x_discrete(breaks = seq(from = 0, to = 1440, by = 60), 
+                   labels = seq(from = 0, to = 1440, by = 60) ) +
+  geom_smooth(se = FALSE)
+
+
+```
+
+
+# Problem 3 
+```{r setup_noaa}
+data("ny_noaa")
+```
+
+
+
+
+
