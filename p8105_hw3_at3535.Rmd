@@ -19,13 +19,44 @@ knitr::opts_chunk$set(
 
 # Problem 1
 
+This dataset contains `r nrow(instacart)` rows and `r ncol(instacart)` columns.
+
+Observations are the level of items in order by user. There are user/order variables -- User ID, order ID, order day, and order hour. There are also item variables -- name, department, aisle, and some numeric codes.
+
+```{r}
+# instacart %>% 
+#   count(aisle) %>%
+#   arrange(decs(n))
+```
+
+```{r}
+# instacart %>% 
+#   count(aisle) %>%
+#   filter(n > 10000) %>%
+#   mutate(
+#     aisle = factor(aisle),
+#     aisle = fct_reorder(aisle, n)
+#   ) %>%
+#   ggplot(aes(x = aisle, y = n)) +
+#   geom_point() +
+#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+
+```
+
+```{r}
+
+
+```
+
+
 
 # Problem 2 
 
-The following code chunk loads the accelerometer dataset and cleans the dataset by encoding with reasonable variable classes, adds a new variable week_weekend that determines whether the day observed is a weekday or weekend, and combines all activity observations into one variable column. 
+The following code chunk loads the accelerometer dataset and cleans the dataset by encoding with reasonable variable classes, adds a new variable week_weekend that determines whether the day observed is a weekday or weekend, and combines all activity observations into one variable column.
 
 ```{r accel}
-accel_df = 
+accel_df =
   read_csv(file = "./data/accel_data.csv") %>%
   janitor::clean_names() %>%
   mutate(day = as.factor(day)) %>%
@@ -36,8 +67,8 @@ accel_df =
                values_to = "activity_count") %>%
   mutate(
     minute = as.integer(minute),
-    week = as.factor(week), 
-    day_id = as.factor(day_id)) 
+    week = as.factor(week),
+    day_id = as.factor(day_id))
 
 accel_df
 skimr::skim(accel_df)
@@ -47,11 +78,11 @@ The resulting dataset has the existing variables: **`r colnames(accel_df)`** whi
 
 The dimensions of the dataset are `r nrow(accel_df)` x `r ncol(accel_df)`, meaning that there are a total of `r nrow(accel_df)` observations for `r ncol(accel_df)` different variables. There are 35 unique entries for the day_id variable, showing that the dataset contains observations over a span of 35 days.
 
-The key variables in this dataset are **day, minute** and **activity_count**. 
+The key variables in this dataset are **day, minute** and **activity_count**.
 
 ```{r aggregate}
-total_activity = 
-  accel_df %>% 
+total_activity =
+  accel_df %>%
   group_by(day_id) %>%
   summarize(daily_activity = sum(activity_count))
 
@@ -59,24 +90,82 @@ total_activity
 skimr::skim(total_activity)
 ```
 
-The trends are not quite clear. 
+The trends are not quite clear.
 
 ```{r accel_plot}
 accel_df %>%
   ggplot(aes(x = factor(minute), y = activity_count)) +
   geom_point(alpha = 0.5, aes(color = day)) +
-  scale_x_discrete(breaks = seq(from = 0, to = 1440, by = 60), 
+  scale_x_discrete(breaks = seq(from = 0, to = 1440, by = 60),
                    labels = seq(from = 0, to = 1440, by = 60) ) +
   geom_smooth(se = FALSE)
 
 
 ```
 
+A lot of observations are in the higher activity range. 
 
 # Problem 3 
 ```{r setup_noaa}
 data("ny_noaa")
+skimr::skim(ny_noaa)
 ```
+
+This dataset contains `r nrow(ny_noaa)` rows and `r ncol(ny_noaa)` columns. 
+
+Observations are the amount of snowfall, snow depth, precipitation, maximum and minimum temperatures each day for all New York state weather stations from January 1, 1981 through December 31, 2010. Key variables are those 5 core variables observed mentioned above: prcp, snow, snwd, tmax, and tmin. 
+
+The completion rates for variables tmax and tmin are both 0.56, meaning almost half of the observations do not include this data. The accuracy in trends shown by the data for this variables will be greatly affected. For the other 3 core variables, the completion rate for precipitation is 0.94 and for snowfall it is 0.85. The trends plotted from these variables will have relatively more accuracy. However, for snow depth, the completion rate is 0.77, meaning that there is still quite a lot of missing data for this variable so the reliability of results inferred from this variable data will be compromised.
+
+```{r clean_noaa}
+ny_noaa = 
+  ny_noaa %>% 
+  separate(date, into = c("year", "month", "day")) %>%
+  mutate(tmax  = as.numeric(tmax), tmin = as.numeric(tmin), prcp = as.double(prcp), snow = as.double(snow), snwd = as.double(snwd))
+
+ny_noaa
+
+```
+
+
+This code chunk makes a two-panel plot showing the average max temperature in January and in July in each station across years
+
+```{r avg_max_plot}
+ny_noaa %>%
+  filter(month == "01" | month == "07") %>%
+  group_by(year) %>%
+  mutate(
+    mean_tmax = mean(tmax, na.rm = TRUE)
+  ) %>%
+  ggplot(aes(x = year, y = mean_tmax, group = id)) +
+  geom_point() + 
+  geom_path() +
+  facet_grid(.~month)
+
+```
+
+This code chunk makes a two-panel plot showing tmax vs tmin for the full dataset and a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
+
+```{r tmaxmin}
+t_p = 
+  ny_noaa %>%
+  ggplot(aes(x = tax, y = tmin)) +
+  geom_point() +
+  geom_smooth(se = FALSE)
+
+snow_p = 
+  ny_noaa %>%
+  filter(snow > 0 && snow < 100) %>%
+  ggplot(aes(x = year, y = snow))
+
+t_p + snow_p
+
+
+```
+
+
+`
+
 
 
 
